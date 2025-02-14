@@ -1,5 +1,7 @@
 package com.example.processos_api.service;
 
+import com.example.processos_api.dto.ProcessoDTO;
+import com.example.processos_api.mapper.ProcessoMapper;
 import com.example.processos_api.model.Processo;
 import com.example.processos_api.repository.ProcessoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,7 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ProcessoService {
@@ -23,44 +26,56 @@ public class ProcessoService {
     @Autowired
     private IbgeService ibgeService;
 
-    // Salvar um processo
-    public Processo salvarProcesso(Processo processo) {
-        if (!ibgeService.ufValida(processo.getUf())) {
+    // Salvar um processo usando DTO
+    public ProcessoDTO salvarProcesso(ProcessoDTO processoDTO) {
+        // Validar UF e município
+        if (!ibgeService.ufValida(processoDTO.getUf())) {
             throw new IllegalArgumentException("UF inválida!");
         }
-
-        if (!ibgeService.municipioValido(processo.getUf(), processo.getMunicipio())) {
+        if (!ibgeService.municipioValido(processoDTO.getUf(), processoDTO.getMunicipio())) {
             throw new IllegalArgumentException("Município inválido ou não pertence à UF informada!");
         }
 
-        return processoRepository.save(processo);
+        // Converter DTO para entidade e salvar
+        Processo processo = ProcessoMapper.toEntity(processoDTO);
+        Processo processoSalvo = processoRepository.save(processo);
+
+        // Retornar DTO correspondente
+        return ProcessoMapper.toDTO(processoSalvo);
     }
 
-    // Listar todos os processos
-    public List<Processo> listarProcessos() {
-        return processoRepository.findAll();
+
+    // Listar todos os processos (não paginado)
+    public List<ProcessoDTO> listarProcessos() {
+        return processoRepository.findAll()
+                .stream()
+                .map(ProcessoMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
-    public Page<Processo> listarProcessosPaginados(Pageable pageable) {
-        return processoRepository.findAll(pageable);
+    // Listar processos paginados
+    public Page<ProcessoDTO> listarProcessosPaginados(Pageable pageable) {
+        return processoRepository.findAll(pageable)
+                .map(ProcessoMapper::toDTO);
     }
 
     // Buscar um processo por ID
-    public Optional<Processo> buscarProcessoPorId(Long id) {
-        return processoRepository.findById(id);
+    public Optional<ProcessoDTO> buscarProcessoPorId(Long id) {
+        return processoRepository.findById(id)
+                .map(ProcessoMapper::toDTO);
     }
 
-
     // Atualizar um processo
-    public Processo atualizarProcesso(Long id, Processo processoAtualizado) {
+    public ProcessoDTO atualizarProcesso(Long id, ProcessoDTO processoDTO) {
         return processoRepository.findById(id)
                 .map(processo -> {
-                    processo.setNpu(processoAtualizado.getNpu());
-                    processo.setDataCadastro(processoAtualizado.getDataCadastro());
-                    processo.setMunicipio(processoAtualizado.getMunicipio());
-                    processo.setUf(processoAtualizado.getUf());
-                    processo.setDocumento(processoAtualizado.getDocumento());
-                    return processoRepository.save(processo);
+                    processo.setNpu(processoDTO.getNpu());
+                    processo.setDataCadastro(processoDTO.getDataCadastro());
+                    processo.setMunicipio(processoDTO.getMunicipio());
+                    processo.setUf(processoDTO.getUf());
+                    processo.setDocumento(processoDTO.getDocumento());
+                    Processo atualizado = processoRepository.save(processo);
+                    return ProcessoMapper.toDTO(atualizado);
                 })
                 .orElseThrow(() -> new RuntimeException("Processo não encontrado com o ID: " + id));
     }
@@ -82,13 +97,14 @@ public class ProcessoService {
         processoRepository.save(processo);
     }
 
-    public Processo marcarComoVisualizado(Long id) {
+    // Marcar como visualizado
+    public ProcessoDTO marcarComoVisualizado(Long id) {
         return processoRepository.findById(id)
                 .map(processo -> {
                     processo.setDataVisualizacao(new Date());
-                    return processoRepository.save(processo);
+                    Processo atualizado = processoRepository.save(processo);
+                    return ProcessoMapper.toDTO(atualizado);
                 })
                 .orElseThrow(() -> new RuntimeException("Processo não encontrado com o ID: " + id));
     }
-
 }

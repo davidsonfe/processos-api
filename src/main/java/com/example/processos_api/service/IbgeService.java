@@ -16,7 +16,7 @@ public class IbgeService {
 
     private final RestTemplate restTemplate;
 
-    @Autowired  // 🔹 Permite a injeção automática do RestTemplate
+    @Autowired
     public IbgeService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
@@ -41,13 +41,7 @@ public class IbgeService {
         }
     }
 
-    public boolean ufValida(String uf) {
-        return listarUfs().contains(uf);
-    }
 
-    public boolean municipioValido(String uf, String municipio) {
-        return listarMunicipiosPorUf(uf).contains(municipio);
-    }
 
     private static class EstadoIbge {
         private String sigla;

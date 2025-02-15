@@ -2,8 +2,6 @@ package com.example.processos_api.controller;
 
 import com.example.processos_api.dto.PageResponse;
 import com.example.processos_api.dto.ProcessoDTO;
-import com.example.processos_api.mapper.ProcessoMapper;
-import com.example.processos_api.model.Processo;
 import com.example.processos_api.service.ProcessoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.stream.Collectors;
+
 
 @Validated
 @RestController
@@ -26,7 +24,7 @@ public class ProcessoController {
     @Autowired
     private ProcessoService processoService;
 
-    // Criar um processo mantendo os parâmetros explícitos
+
     @PostMapping
     public ResponseEntity<ProcessoDTO> criarProcesso(
             @RequestParam("npu") String npu,
@@ -36,7 +34,7 @@ public class ProcessoController {
             @RequestParam("documento") MultipartFile documento) {
 
         try {
-            // Criando o DTO diretamente
+
             ProcessoDTO processoDTO = new ProcessoDTO();
             processoDTO.setNpu(npu);
             processoDTO.setDataCadastro(dataCadastro);
@@ -44,8 +42,8 @@ public class ProcessoController {
             processoDTO.setUf(uf);
             processoDTO.setDocumento(documento.getBytes());
 
-            // Passando o DTO diretamente para o serviço, sem converter para a entidade
-            ProcessoDTO processoSalvo = processoService.salvarProcesso(processoDTO);
+
+            ProcessoDTO processoSalvo = processoService.salvarProcesso(processoDTO, null);
 
             return ResponseEntity.ok(processoSalvo);
 
@@ -56,7 +54,7 @@ public class ProcessoController {
 
 
 
-    // Listar todos os processos (paginado)
+
     @GetMapping
     public ResponseEntity<PageResponse<ProcessoDTO>> listarProcessos(Pageable pageable) {
         Page<ProcessoDTO> processos = processoService.listarProcessosPaginados(pageable);
@@ -73,8 +71,7 @@ public class ProcessoController {
     }
 
 
-    // Buscar um processo por ID
-    // Buscar um processo por ID
+
     @GetMapping("/{id}")
     public ResponseEntity<ProcessoDTO> buscarProcessoPorId(@PathVariable Long id) {
         return processoService.buscarProcessoPorId(id)
@@ -83,7 +80,7 @@ public class ProcessoController {
     }
 
 
-    // Atualizar um processo
+
     @PutMapping("/{id}")
     public ResponseEntity<ProcessoDTO> atualizarProcesso(@PathVariable Long id, @RequestBody ProcessoDTO processoDTO) {
         ProcessoDTO processoAtualizado = processoService.atualizarProcesso(id, processoDTO);
@@ -91,14 +88,14 @@ public class ProcessoController {
     }
 
 
-    // Deletar um processo
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarProcesso(@PathVariable Long id) {
-        processoService.deletarProcesso(id);
+
+    @DeleteMapping("/npu/{npu}")
+    public ResponseEntity<Void> deletarProcessoPorNpu(@PathVariable String npu) {
+        processoService.deletarProcessoPorNpu(npu);
         return ResponseEntity.noContent().build();
     }
 
-    // Upload de documento PDF
+
     @PostMapping("/{id}/upload")
     public ResponseEntity<Void> uploadDocumento(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
         try {
@@ -109,8 +106,8 @@ public class ProcessoController {
         }
     }
 
-    // Marcar como visualizado
-    // Marcar como visualizado
+
+
     @PatchMapping("/{id}/visualizar")
     public ResponseEntity<ProcessoDTO> marcarComoVisualizado(@PathVariable Long id) {
         return ResponseEntity.ok(processoService.marcarComoVisualizado(id));
